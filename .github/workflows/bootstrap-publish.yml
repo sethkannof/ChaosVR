@@ -1,4 +1,4 @@
-name: ChaosVR Bootstrap Offline
+name: ChaosVR Community Pre-Alpha Build
 
 on:
   push:
@@ -21,3 +21,48 @@ jobs:
       - name: Run offline regression
         working-directory: ChaosVR_v9
         run: python3 Simulation/run_all_offline.py
+
+  windows-build:
+    runs-on: windows-latest
+    needs: offline-regression
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reconstruct source
+        shell: pwsh
+        run: |
+          $parts = Get-ChildItem bootstrap\source.b64.part* | Sort-Object Name
+          $b64 = ($parts | ForEach-Object { Get-Content $_.FullName -Raw }) -join ""
+          [IO.File]::WriteAllBytes("source.zip", [Convert]::FromBase64String($b64))
+          Expand-Archive source.zip -DestinationPath .
+          if (-not (Test-Path "ChaosVR_v9\Release\BUILD_COMMUNITY_PREALPHA.ps1")) { throw "Source reconstruction failed" }
+      - uses: microsoft/setup-msbuild@v2
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: |
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git "$env:RUNNER_TEMP\vcpkg"
+          & "$env:RUNNER_TEMP\vcpkg\bootstrap-vcpkg.bat" -disableMetrics
+          "VCPKG_ROOT=$env:RUNNER_TEMP\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Build community pre-alpha
+        working-directory: ChaosVR_v9
+        shell: pwsh
+        run: .\Release\BUILD_COMMUNITY_PREALPHA.ps1 -Config Release -VcpkgRoot $env:VCPKG_ROOT
+      - name: Verify package
+        working-directory: ChaosVR_v9
+        shell: pwsh
+        run: .\Release\VERIFY_COMMUNITY_PREALPHA.ps1
+      - name: Create package SHA-256
+        working-directory: ChaosVR_v9
+        shell: pwsh
+        run: |
+          $zip = "dist\ChaosVR-Community-PreAlpha.zip"
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  ChaosVR-Community-PreAlpha.zip" | Set-Content "dist\ChaosVR-Community-PreAlpha.zip.sha256" -Encoding ASCII
+          Write-Host "ZIP SHA-256: $hash"
+      - name: Upload verified Windows tester package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChaosVR-Community-PreAlpha-Windows
+          path: |
+            ChaosVR_v9/dist/ChaosVR-Community-PreAlpha.zip
+            ChaosVR_v9/dist/ChaosVR-Community-PreAlpha.zip.sha256
+          if-no-files-found: error
