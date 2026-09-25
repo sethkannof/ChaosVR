@@ -1,6 +1,8 @@
 name: ChaosVR Community Pre-Alpha Build
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -8,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Reconstruct source
+      - name: Reconstruct patched source
         shell: bash
         run: |
-          cat bootstrap/source.b64.part* | base64 -d > source.zip
-          unzip -q source.zip
+          cat bootstrap_gz/src.gz.b64.part* | base64 -d > source.tar.gz
+          tar -xzf source.tar.gz
           test -f ChaosVR_v9/Simulation/run_all_offline.py
       - name: Install compiler
         run: sudo apt-get update && sudo apt-get install -y g++ python3
@@ -25,13 +27,13 @@ jobs:
     needs: offline-regression
     steps:
       - uses: actions/checkout@v4
-      - name: Reconstruct source
+      - name: Reconstruct patched source
         shell: pwsh
         run: |
-          $parts = Get-ChildItem bootstrap\source.b64.part* | Sort-Object Name
+          $parts = Get-ChildItem bootstrap_gz\src.gz.b64.part* | Sort-Object Name
           $b64 = ($parts | ForEach-Object { Get-Content $_.FullName -Raw }) -join ""
-          [IO.File]::WriteAllBytes("source.zip", [Convert]::FromBase64String($b64))
-          Expand-Archive source.zip -DestinationPath .
+          [IO.File]::WriteAllBytes("source.tar.gz", [Convert]::FromBase64String($b64))
+          tar -xzf source.tar.gz
           if (-not (Test-Path "ChaosVR_v9\Release\BUILD_COMMUNITY_PREALPHA.ps1")) { throw "Source reconstruction failed" }
       - uses: microsoft/setup-msbuild@v2
       - name: Bootstrap vcpkg
@@ -39,6 +41,7 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/microsoft/vcpkg.git "$env:RUNNER_TEMP\vcpkg"
           & "$env:RUNNER_TEMP\vcpkg\bootstrap-vcpkg.bat" -disableMetrics
+          if ($LASTEXITCODE -ne 0) { throw "vcpkg bootstrap failed" }
           "VCPKG_ROOT=$env:RUNNER_TEMP\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Build community pre-alpha
         working-directory: ChaosVR_v9
