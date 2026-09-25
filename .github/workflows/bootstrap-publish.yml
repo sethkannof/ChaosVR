@@ -1,1 +1,23 @@
-The requested file reference is not currently visible. Use files.search or files.list to rediscover the file, then retry with a returned ref_id or file_id.
+name: ChaosVR Bootstrap Offline
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  offline-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reconstruct source
+        shell: bash
+        run: |
+          cat bootstrap/source.b64.part* | base64 -d > source.zip
+          unzip -q source.zip
+          test -f ChaosVR_v9/Simulation/run_all_offline.py
+      - name: Install compiler
+        run: sudo apt-get update && sudo apt-get install -y g++ python3
+      - name: Run offline regression
+        working-directory: ChaosVR_v9
+        run: python3 Simulation/run_all_offline.py
