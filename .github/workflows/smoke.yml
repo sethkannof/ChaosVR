@@ -1,0 +1,11 @@
+name: CI Smoke
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "ChaosVR CI online"
