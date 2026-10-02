@@ -18,7 +18,13 @@ jobs:
         run: |
           cat bootstrap_gz/src.gz.b64.part* | base64 -d > source.tar.gz
           tar -xzf source.tar.gz
-          cp -R patches/. ChaosVR_v9/
+          cp -f patches/Host64/src/WgcCapture.cpp ChaosVR_v9/Host64/src/WgcCapture.cpp
+          cp -f patches/Host64/src/HostApp.cpp ChaosVR_v9/Host64/src/HostApp.cpp
+          cp -f patches/Host64/build_windows.ps1 ChaosVR_v9/Host64/build_windows.ps1
+          cp -f patches/Bridge32/src/D3D9PresentHook.cpp ChaosVR_v9/Bridge32/src/D3D9PresentHook.cpp
+          cp -f patches/Bridge32/build_windows.ps1 ChaosVR_v9/Bridge32/build_windows.ps1
+          cp -f patches/Injector32/build_windows.ps1 ChaosVR_v9/Injector32/build_windows.ps1
+          cp -f patches/Release/BUILD_COMMUNITY_PREALPHA.ps1 ChaosVR_v9/Release/BUILD_COMMUNITY_PREALPHA.ps1
           test -f ChaosVR_v9/Simulation/run_all_offline.py
       - name: Install compiler
         run: sudo apt-get update && sudo apt-get install -y g++ python3
@@ -38,6 +44,13 @@ jobs:
           $b64 = ($parts | ForEach-Object { Get-Content $_.FullName -Raw }) -join ""
           [IO.File]::WriteAllBytes("source.tar.gz", [Convert]::FromBase64String($b64))
           tar -xzf source.tar.gz
+          Copy-Item "patches\Host64\src\WgcCapture.cpp" "ChaosVR_v9\Host64\src\WgcCapture.cpp" -Force
+          Copy-Item "patches\Host64\src\HostApp.cpp" "ChaosVR_v9\Host64\src\HostApp.cpp" -Force
+          Copy-Item "patches\Host64\build_windows.ps1" "ChaosVR_v9\Host64\build_windows.ps1" -Force
+          Copy-Item "patches\Bridge32\src\D3D9PresentHook.cpp" "ChaosVR_v9\Bridge32\src\D3D9PresentHook.cpp" -Force
+          Copy-Item "patches\Bridge32\build_windows.ps1" "ChaosVR_v9\Bridge32\build_windows.ps1" -Force
+          Copy-Item "patches\Injector32\build_windows.ps1" "ChaosVR_v9\Injector32\build_windows.ps1" -Force
+          Copy-Item "patches\Release\BUILD_COMMUNITY_PREALPHA.ps1" "ChaosVR_v9\Release\BUILD_COMMUNITY_PREALPHA.ps1" -Force
           if (-not (Test-Path "ChaosVR_v9\Release\BUILD_COMMUNITY_PREALPHA.ps1")) { throw "Source reconstruction failed" }
       - uses: microsoft/setup-msbuild@v2
       - name: Bootstrap vcpkg
@@ -55,8 +68,8 @@ jobs:
         working-directory: ChaosVR_v9
         shell: pwsh
         run: |
+          if (-not (Test-Path "dist\ChaosVR-Community-PreAlpha\Bin\openxr_loader.dll")) { throw "Packaged openxr_loader.dll is missing" }
           .\Release\VERIFY_COMMUNITY_PREALPHA.ps1
-          if (-not (Test-Path "dist\ChaosVR-Community-PreAlpha\Bin\openxr_loader.dll")) { throw "Packaged openxr_loader.dll missing" }
       - name: Create package SHA-256
         working-directory: ChaosVR_v9
         shell: pwsh
@@ -73,7 +86,6 @@ jobs:
             ChaosVR_v9/dist/ChaosVR-Community-PreAlpha.zip
             ChaosVR_v9/dist/ChaosVR-Community-PreAlpha.zip.sha256
           if-no-files-found: error
-
       - name: Publish GitHub prerelease
         uses: softprops/action-gh-release@v2
         with:
