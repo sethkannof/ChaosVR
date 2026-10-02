@@ -21,6 +21,7 @@ Copy-Item (Join-Path $root "Host64\build\$Config\ChaosVRHost64.exe") (Join-Path 
 # installs the runtime DLL under the Host64 build tree; bundle it app-local so
 # testers do not need a developer/vcpkg environment or a PATH entry.
 $openXrLoaderCandidates = @(
+  (Join-Path $root "Host64\build\$Config\openxr_loader.dll"),
   (Join-Path $root "Host64\build\vcpkg_installed\x64-windows\bin\openxr_loader.dll"),
   (Join-Path $VcpkgRoot "installed\x64-windows\bin\openxr_loader.dll")
 )
