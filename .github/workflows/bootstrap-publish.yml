@@ -20,6 +20,8 @@ jobs:
           tar -xzf source.tar.gz
           cp -f patches/Host64/src/WgcCapture.cpp ChaosVR_v9/Host64/src/WgcCapture.cpp
           cp -f patches/Host64/src/HostApp.cpp ChaosVR_v9/Host64/src/HostApp.cpp
+          cp -f patches/Host64/include/ChaosVrHost/XrCheck.h ChaosVR_v9/Host64/include/ChaosVrHost/XrCheck.h
+          cp -f patches/Host64/src/OpenXrContext.cpp ChaosVR_v9/Host64/src/OpenXrContext.cpp
           cp -f patches/Host64/build_windows.ps1 ChaosVR_v9/Host64/build_windows.ps1
           cp -f patches/Bridge32/src/D3D9PresentHook.cpp ChaosVR_v9/Bridge32/src/D3D9PresentHook.cpp
           cp -f patches/Bridge32/build_windows.ps1 ChaosVR_v9/Bridge32/build_windows.ps1
@@ -46,6 +48,8 @@ jobs:
           tar -xzf source.tar.gz
           Copy-Item "patches\Host64\src\WgcCapture.cpp" "ChaosVR_v9\Host64\src\WgcCapture.cpp" -Force
           Copy-Item "patches\Host64\src\HostApp.cpp" "ChaosVR_v9\Host64\src\HostApp.cpp" -Force
+          Copy-Item "patches\Host64\include\ChaosVrHost\XrCheck.h" "ChaosVR_v9\Host64\include\ChaosVrHost\XrCheck.h" -Force
+          Copy-Item "patches\Host64\src\OpenXrContext.cpp" "ChaosVR_v9\Host64\src\OpenXrContext.cpp" -Force
           Copy-Item "patches\Host64\build_windows.ps1" "ChaosVR_v9\Host64\build_windows.ps1" -Force
           Copy-Item "patches\Bridge32\src\D3D9PresentHook.cpp" "ChaosVR_v9\Bridge32\src\D3D9PresentHook.cpp" -Force
           Copy-Item "patches\Bridge32\build_windows.ps1" "ChaosVR_v9\Bridge32\build_windows.ps1" -Force
