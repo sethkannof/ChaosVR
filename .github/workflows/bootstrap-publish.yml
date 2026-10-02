@@ -18,6 +18,7 @@ jobs:
         run: |
           cat bootstrap_gz/src.gz.b64.part* | base64 -d > source.tar.gz
           tar -xzf source.tar.gz
+          cp -R patches/. ChaosVR_v9/
           test -f ChaosVR_v9/Simulation/run_all_offline.py
       - name: Install compiler
         run: sudo apt-get update && sudo apt-get install -y g++ python3
