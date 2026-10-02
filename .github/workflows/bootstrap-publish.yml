@@ -64,11 +64,34 @@ jobs:
         working-directory: ChaosVR_v9
         shell: pwsh
         run: .\Release\BUILD_COMMUNITY_PREALPHA.ps1 -Config Release -VcpkgRoot $env:VCPKG_ROOT
+      - name: Stage Host64 runtime DLLs
+        working-directory: ChaosVR_v9
+        shell: pwsh
+        run: |
+          $stage = "dist\ChaosVR-Community-PreAlpha"
+          $bin = Join-Path $stage "Bin"
+          foreach ($dll in @("openxr_loader.dll", "jsoncpp.dll")) {
+            $src = Join-Path "Host64\build\Release" $dll
+            if (-not (Test-Path $src)) { throw "Required Host64 runtime missing: $src" }
+            Copy-Item $src (Join-Path $bin $dll) -Force
+          }
+          $hashLines = @()
+          Get-ChildItem $stage -File -Recurse | Where-Object { $_.Name -ne "SHA256SUMS.txt" } | Sort-Object FullName | ForEach-Object {
+            $rel = $_.FullName.Substring((Resolve-Path $stage).Path.Length + 1)
+            $h = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            $hashLines += "$h  $rel"
+          }
+          $hashLines | Set-Content (Join-Path $stage "SHA256SUMS.txt") -Encoding ASCII
+          $zip = "dist\ChaosVR-Community-PreAlpha.zip"
+          Remove-Item $zip -Force -ErrorAction SilentlyContinue
+          Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip -CompressionLevel Optimal
+
       - name: Verify package
         working-directory: ChaosVR_v9
         shell: pwsh
         run: |
           if (-not (Test-Path "dist\ChaosVR-Community-PreAlpha\Bin\openxr_loader.dll")) { throw "Packaged openxr_loader.dll is missing" }
+          if (-not (Test-Path "dist\ChaosVR-Community-PreAlpha\Bin\jsoncpp.dll")) { throw "Packaged jsoncpp.dll is missing" }
           .\Release\VERIFY_COMMUNITY_PREALPHA.ps1
       - name: Create package SHA-256
         working-directory: ChaosVR_v9
